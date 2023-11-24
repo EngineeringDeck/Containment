@@ -14,6 +14,7 @@ public:
 	const QString& SteamID() const;
 	void SteamLauncherPath(const QString &path);
 	void CaptureDelay(int delay);
+	virtual std::optional<QSize> IdealDimensions();
 	virtual void Launch()=0;
 	virtual void Capture()=0;
 	static const std::vector<std::shared_ptr<Game>> games;
@@ -27,6 +28,7 @@ protected:
 	QString steamLauncherPath;
 	QProcess process;
 	QWindow *window;
+	virtual QString WindowTitle() const=0;
 signals:
 	void Launched();
 	void Captured(QWindow *window);
@@ -35,7 +37,7 @@ signals:
 public slots:
 	virtual void DisplaySettingsRestored() { }
 protected slots:
-	void FindWindow();
+	virtual void FindWindow();
 };
 
 class PixelJunk_Eden : public Game
@@ -46,7 +48,19 @@ public:
 	void Launch() override;
 	void Capture() override;
 protected:
-	bool capturing;
+	QString WindowTitle() const override;
 public slots:
 	void DisplaySettingsRestored() override;
+};
+
+class RhemIIISE : public Game
+{
+	Q_OBJECT
+public:
+	RhemIIISE();
+	std::optional<QSize> IdealDimensions() override;
+	void Launch() override;
+	void Capture() override;
+protected:
+	QString WindowTitle() const override;
 };

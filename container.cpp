@@ -211,12 +211,12 @@ void Container::CaptureSelectedGame()
 
 void Container::EmbedSelectedGameWindow(QWindow *window)
 {
-	qDebug() << window->surfaceType();
 	QWidget *containerWidget=QWidget::createWindowContainer(window,viewport);
 	if (!containerWidget) return; // TODO: alert the user here
 	viewport->addWidget(containerWidget);
 	viewport->setCurrentWidget(containerWidget);
 	setGeometry(originalGeometry);
+	if (std::optional<QSize> idealDimensions=selectedGame->IdealDimensions(); idealDimensions) resize(*idealDimensions);
 }
 
 void Container::DisplayChanged(const QRect &geometry)

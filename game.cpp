@@ -1,14 +1,14 @@
-#include <QDebug>
 #include <Windows.h>
 #include "game.h"
 
 using namespace Qt::Literals::StringLiterals;
 
 const std::vector<std::shared_ptr<Game>> Game::games={
-	std::make_shared<PixelJunk_Eden>()
+	std::make_shared<PixelJunk_Eden>(),
+	std::make_shared<RhemIIISE>()
 };
 
-Game::Game() : QObject(nullptr), window(nullptr)
+Game::Game() : QObject(nullptr), captureDelay(0), window(nullptr)
 {
 	connect(&process,&QProcess::started,this,&Game::FindingWindow,Qt::QueuedConnection);
 	connect(this,&Game::FindingWindow,this,&Game::FindWindow,Qt::QueuedConnection);
@@ -35,10 +35,15 @@ void Game::CaptureDelay(int delay)
 	captureDelay=delay;
 }
 
+std::optional<QSize> Game::IdealDimensions()
+{
+	return std::nullopt;
+}
+
 void Game::FindWindow()
 {
 	HWND handle=nullptr;
-	handle=FindWindowExW(NULL,NULL,NULL,reinterpret_cast<const wchar_t*>(name.utf16()));
+	handle=FindWindowExW(NULL,NULL,NULL,reinterpret_cast<const wchar_t*>(WindowTitle().utf16()));
 	if (!handle)
 	{
 		emit FindingWindow();
@@ -51,11 +56,16 @@ void Game::FindWindow()
 		emit Failed();
 }
 
-PixelJunk_Eden::PixelJunk_Eden() : capturing(false)
+PixelJunk_Eden::PixelJunk_Eden()
 {
 	captureDelay=2000;
-	name="PixelJunk Eden";
+	name=u"PixelJunk Eden"_s;
 	steamID=u"105800"_s;
+}
+
+QString PixelJunk_Eden::WindowTitle() const
+{
+	return name;
 }
 
 void PixelJunk_Eden::Launch()
@@ -103,8 +113,51 @@ void PixelJunk_Eden::Capture()
 
 void PixelJunk_Eden::DisplaySettingsRestored()
 {
-	qDebug() << "Restore";
-	if (!capturing) return;
-	emit Captured(window);
-	capturing=false;
+	/*emit Captured(window);
+	capturing=false;*/
+}
+
+
+RhemIIISE::RhemIIISE()
+{
+	captureDelay=1000;
+	name=u"RHEM III SE"_s;
+	steamID=u"1527930"_s;
+}
+
+QString RhemIIISE::WindowTitle() const
+{
+	return u"RhemIIISE"_s;
+}
+
+std::optional<QSize> RhemIIISE::IdealDimensions()
+{
+	return {{800,600}};
+}
+
+void RhemIIISE::Launch()
+{
+	process.start();
+}
+
+void RhemIIISE::Capture()
+{
+	// in a consistently weird design decision, Rhem places a giant 20,000 x 20,000 black window over the desktop
+	// then puts the game over it, so shrink that window and attempt to destroy it, then capture the game
+	window->resize(1,1);
+	window->close();
+	QTimer::singleShot(captureDelay,[this]() {
+		HWND handle=nullptr;
+		handle=FindWindowExW(NULL,NULL,NULL,reinterpret_cast<const wchar_t*>(WindowTitle().utf16()));
+		if (!handle)
+		{
+			emit Failed();
+			return;
+		}
+		window=QWindow::fromWinId(reinterpret_cast<long long>(handle));
+		if (window)
+			emit Captured(window);
+		else
+			emit Failed();
+	});
 }
