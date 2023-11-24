@@ -5,7 +5,10 @@ using namespace Qt::Literals::StringLiterals;
 
 const std::vector<std::shared_ptr<Game>> Game::games={
 	std::make_shared<PixelJunk_Eden>(),
-	std::make_shared<RhemIIISE>()
+	std::make_shared<RhemISE>(),
+	std::make_shared<RhemIISE>(),
+	std::make_shared<RhemIIISE>(),
+	std::make_shared<RhemIVSE>()
 };
 
 Game::Game() : QObject(nullptr), captureDelay(0), window(nullptr)
@@ -35,7 +38,7 @@ void Game::CaptureDelay(int delay)
 	captureDelay=delay;
 }
 
-std::optional<QSize> Game::IdealDimensions()
+std::optional<QSize> Game::IdealDimensions() const
 {
 	return std::nullopt;
 }
@@ -117,30 +120,22 @@ void PixelJunk_Eden::DisplaySettingsRestored()
 	capturing=false;*/
 }
 
-
-RhemIIISE::RhemIIISE()
+RhemSE::RhemSE()
 {
 	captureDelay=1000;
-	name=u"RHEM III SE"_s;
-	steamID=u"1527930"_s;
 }
 
-QString RhemIIISE::WindowTitle() const
-{
-	return u"RhemIIISE"_s;
-}
-
-std::optional<QSize> RhemIIISE::IdealDimensions()
+std::optional<QSize> RhemSE::IdealDimensions() const
 {
 	return {{800,600}};
 }
 
-void RhemIIISE::Launch()
+void RhemSE::Launch()
 {
 	process.start();
 }
 
-void RhemIIISE::Capture()
+void RhemSE::Capture()
 {
 	// in a consistently weird design decision, Rhem places a giant 20,000 x 20,000 black window over the desktop
 	// then puts the game over it, so shrink that window and attempt to destroy it, then capture the game
@@ -159,5 +154,49 @@ void RhemIIISE::Capture()
 			emit Captured(window);
 		else
 			emit Failed();
-	});
+		});
+}
+
+RhemISE::RhemISE()
+{
+	name=u"RHEM I SE: The Mysterious Land"_s;
+	steamID=u"656900"_s;
+}
+
+QString RhemISE::WindowTitle() const
+{
+	return u"RHEM_I_SE"_s;
+}
+
+RhemIISE::RhemIISE()
+{
+	name=u"RHEM II SE: The Cave"_s;
+	steamID=u"929320"_s;
+}
+
+QString RhemIISE::WindowTitle() const
+{
+	return u"RhemIISE"_s;
+}
+
+RhemIIISE::RhemIIISE()
+{
+	name=u"RHEM III SE"_s;
+	steamID=u"1527930"_s;
+}
+
+QString RhemIIISE::WindowTitle() const
+{
+	return u"RhemIIISE"_s;
+}
+
+RhemIVSE::RhemIVSE()
+{
+	name=u"RHEM IV: The Golden Fragments Special Edition"_s;
+	steamID=u"391510"_s;
+}
+
+QString RhemIVSE::WindowTitle() const
+{
+	return u"RHEM_IV_SE"_s;
 }
